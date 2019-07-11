@@ -4,13 +4,17 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.example.ricardo.oqueapp.activity.CadastroActivity;
 import com.example.ricardo.oqueapp.config.ConfiguracaoFirebase;
 import com.example.ricardo.oqueapp.model.Usuario;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 
 public class UsuarioFirebase {
 
@@ -20,6 +24,7 @@ public class UsuarioFirebase {
         FirebaseAuth usuario = ConfiguracaoFirebase.getFirebaseAuth();
         String email = usuario.getCurrentUser().getEmail();
         String identificadorUsuario = Base64Custom.codificarBase64(email);
+
 
         return identificadorUsuario;
     }
@@ -84,12 +89,15 @@ public class UsuarioFirebase {
     }
 
     public static Usuario getDadosUsuarioLogado(){
-
+        CadastroActivity cadastroActivity = new CadastroActivity();
         FirebaseUser firebaseUser = getUsuarioAtual();
 
         Usuario usuario = new Usuario();
         usuario.setEmail(firebaseUser.getEmail());
         usuario.setNome(firebaseUser.getDisplayName());
+        usuario.setToken(FirebaseInstanceId.getInstance().getToken());
+
+
 
         if (firebaseUser.getPhotoUrl() == null){
             usuario.setFoto("");

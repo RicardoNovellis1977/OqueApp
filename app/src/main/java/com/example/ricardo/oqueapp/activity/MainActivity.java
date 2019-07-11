@@ -14,7 +14,9 @@ import com.example.ricardo.oqueapp.R;
 import com.example.ricardo.oqueapp.config.ConfiguracaoFirebase;
 import com.example.ricardo.oqueapp.fragment.ContatosFragment;
 import com.example.ricardo.oqueapp.fragment.ConversasFragment;
+import com.example.ricardo.oqueapp.model.Grupo;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
 import com.ogaclejapan.smarttablayout.SmartTabLayout;
 import com.ogaclejapan.smarttablayout.utils.v4.FragmentPagerItemAdapter;
@@ -31,7 +33,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         autenticacao = ConfiguracaoFirebase.getFirebaseAuth();
-
 
         Toolbar toolbar = findViewById(R.id.toolbarPrincipal);
         toolbar.setTitle("O Que App");

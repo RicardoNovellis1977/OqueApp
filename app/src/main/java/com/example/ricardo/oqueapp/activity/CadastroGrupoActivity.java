@@ -26,6 +26,8 @@ import com.example.ricardo.oqueapp.model.Grupo;
 import com.example.ricardo.oqueapp.model.Usuario;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
@@ -103,17 +105,19 @@ public class CadastroGrupoActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
+
                 String nomeGrupo = editNomeGrupo.getText().toString();
 
                 listaMembrosSelecionado.add(UsuarioFirebase.getDadosUsuarioLogado());
                 grupo.setMembros(listaMembrosSelecionado);
-
                 grupo.setNome(nomeGrupo);
                 grupo.salvar();
 
                 Intent intent = new Intent(CadastroGrupoActivity.this, ChatActivity.class);
                 intent.putExtra("chatGrupo",grupo);
                 startActivity(intent);
+
+
             }
         });
     }

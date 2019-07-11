@@ -13,12 +13,15 @@ import com.example.ricardo.oqueapp.helper.Base64Custom;
 import com.example.ricardo.oqueapp.helper.UsuarioFirebase;
 import com.example.ricardo.oqueapp.model.Usuario;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 
 public class CadastroActivity extends AppCompatActivity {
 
@@ -48,6 +51,17 @@ public class CadastroActivity extends AppCompatActivity {
             public void onComplete(@NonNull Task<AuthResult> task) {
 
                 if (task.isSuccessful()){
+
+                    FirebaseInstanceId.getInstance().getInstanceId().addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
+                        @Override
+                        public void onSuccess(InstanceIdResult instanceIdResult) {
+
+                            String token = instanceIdResult.getToken();
+                            usuario.setToken(token);
+                            usuario.salvar();
+
+                        }
+                    });
 
                     Toast.makeText(CadastroActivity.this,"Sucesso ao cadastrar usuario!",Toast.LENGTH_LONG).show();
 

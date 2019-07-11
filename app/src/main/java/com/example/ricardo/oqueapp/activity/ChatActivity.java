@@ -24,12 +24,16 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.example.ricardo.oqueapp.R;
 import com.example.ricardo.oqueapp.adapter.MensagensAdapter;
+import com.example.ricardo.oqueapp.api.NotificacaoService;
 import com.example.ricardo.oqueapp.config.ConfiguracaoFirebase;
 import com.example.ricardo.oqueapp.helper.Base64Custom;
+import com.example.ricardo.oqueapp.helper.RetrofitConfig;
 import com.example.ricardo.oqueapp.helper.UsuarioFirebase;
 import com.example.ricardo.oqueapp.model.Conversa;
 import com.example.ricardo.oqueapp.model.Grupo;
 import com.example.ricardo.oqueapp.model.Mensagem;
+import com.example.ricardo.oqueapp.model.Notificacao;
+import com.example.ricardo.oqueapp.model.NotificacaoDados;
 import com.example.ricardo.oqueapp.model.Usuario;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -37,6 +41,7 @@ import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
@@ -46,6 +51,10 @@ import java.util.List;
 import java.util.UUID;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -69,6 +78,7 @@ public class ChatActivity extends AppCompatActivity {
     private MensagensAdapter adapter;
     private List<Mensagem> mensagens = new ArrayList<>();
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -90,43 +100,43 @@ public class ChatActivity extends AppCompatActivity {
         usuarioRemetente = UsuarioFirebase.getDadosUsuarioLogado();
 
         Bundle bundle = getIntent().getExtras();
-        if (bundle != null){
+        if (bundle != null) {
 
-                if (bundle.containsKey("chatGrupo")){
-                    grupo = (Grupo) bundle.getSerializable("chatGrupo");
-                    idUsuarioDestinatario = grupo.getId();
-                    idUsuarioRemetente = UsuarioFirebase.getIdentificadorUsuario();
-                    textViewNome.setText(grupo.getNome());
+            if (bundle.containsKey("chatGrupo")) {
+                grupo = (Grupo) bundle.getSerializable("chatGrupo");
+                idUsuarioDestinatario = grupo.getId();
+                idUsuarioRemetente = UsuarioFirebase.getIdentificadorUsuario();
+                textViewNome.setText(grupo.getNome());
 
-                    String foto = grupo.getFoto();
-                    if (foto!= null){
+                String foto = grupo.getFoto();
+                if (foto != null) {
 
-                        Uri url = Uri.parse(foto);
-                        Glide.with(ChatActivity.this)
-                                .load(url)
-                                .into(circleImageViewFoto);
-                    }else {
-                        circleImageViewFoto.setImageResource(R.drawable.padrao);
-                    }
-                }else {
-                    usuarioDestinatario = (Usuario) bundle.getSerializable("chatContato");
-                    textViewNome.setText(usuarioDestinatario.getNome());
-                    String foto = usuarioDestinatario.getFoto();
-                    if (foto!= null){
+                    Uri url = Uri.parse(foto);
+                    Glide.with(ChatActivity.this)
+                            .load(url)
+                            .into(circleImageViewFoto);
+                } else {
+                    circleImageViewFoto.setImageResource(R.drawable.padrao);
+                }
+            } else {
+                usuarioDestinatario = (Usuario) bundle.getSerializable("chatContato");
+                textViewNome.setText(usuarioDestinatario.getNome());
+                String foto = usuarioDestinatario.getFoto();
+                if (foto != null) {
 
                     Uri url = Uri.parse(usuarioDestinatario.getFoto());
                     Glide.with(ChatActivity.this)
                             .load(url)
                             .into(circleImageViewFoto);
-                }else {
+                } else {
                     circleImageViewFoto.setImageResource(R.drawable.padrao);
                 }
                 idUsuarioRemetente = UsuarioFirebase.getIdentificadorUsuario();
                 idUsuarioDestinatario = Base64Custom.codificarBase64(usuarioDestinatario.getEmail());
-                }
+            }
         }
 
-        adapter = new MensagensAdapter(mensagens,getApplicationContext());
+        adapter = new MensagensAdapter(mensagens, getApplicationContext());
 
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
         recyclerMensagens.setLayoutManager(layoutManager);
@@ -144,8 +154,8 @@ public class ChatActivity extends AppCompatActivity {
             public void onClick(View v) {
 
                 Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                if (intent.resolveActivity(getPackageManager()) != null){
-                    startActivityForResult(intent,SELECAO_CAMERA);
+                if (intent.resolveActivity(getPackageManager()) != null) {
+                    startActivityForResult(intent, SELECAO_CAMERA);
                 }
             }
         });
@@ -155,21 +165,21 @@ public class ChatActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (resultCode == RESULT_OK){
+        if (resultCode == RESULT_OK) {
 
             Bitmap imagem = null;
 
             try {
 
-                switch (requestCode){
+                switch (requestCode) {
                     case SELECAO_CAMERA:
                         imagem = (Bitmap) data.getExtras().get("data");
                         break;
                 }
-                if (imagem != null){
+                if (imagem != null) {
 
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    imagem.compress(Bitmap.CompressFormat.JPEG,70,baos);
+                    imagem.compress(Bitmap.CompressFormat.JPEG, 70, baos);
                     byte[] dadosImagem = baos.toByteArray();
 
                     String nomeImagem = UUID.randomUUID().toString();
@@ -200,9 +210,9 @@ public class ChatActivity extends AppCompatActivity {
                                     mensagem.setMensagem("image.jpeg");
                                     mensagem.setImagem(uri.toString());
 
-                                    salvarMensagem(idUsuarioRemetente,idUsuarioDestinatario,mensagem);
+                                    salvarMensagem(idUsuarioRemetente, idUsuarioDestinatario, mensagem);
 
-                                    salvarMensagem(idUsuarioDestinatario,idUsuarioRemetente,mensagem);
+                                    salvarMensagem(idUsuarioDestinatario, idUsuarioRemetente, mensagem);
 
                                     Toast.makeText(ChatActivity.this, "Sucesso ao enviar imagem"
                                             , Toast.LENGTH_SHORT).show();
@@ -212,35 +222,63 @@ public class ChatActivity extends AppCompatActivity {
                     });
                 }
 
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
 
-    public void enviarMensagem (View view){
+    public void enviarMensagem(View view) {
 
         String textoMensagem = editMensagem.getText().toString();
 
-        if (!textoMensagem.isEmpty()){
+        if (!textoMensagem.isEmpty()) {
 
-            if (usuarioDestinatario != null){
+            if (usuarioDestinatario != null) {
 
                 Mensagem mensagem = new Mensagem();
                 mensagem.setIdUsuario(idUsuarioRemetente);
                 mensagem.setMensagem(textoMensagem);
 
-                salvarMensagem(idUsuarioRemetente,idUsuarioDestinatario,mensagem);
+                RetrofitConfig retrofitConfig = new RetrofitConfig();
 
-                salvarMensagem(idUsuarioDestinatario,idUsuarioRemetente,mensagem);
+                String to = usuarioDestinatario.getToken();
+                Notificacao notificacao = new Notificacao(usuarioRemetente.getNome(), textoMensagem);
+                NotificacaoDados notificacaoDados = new NotificacaoDados(to, notificacao);
 
-                salvarConversa(idUsuarioRemetente,idUsuarioDestinatario,usuarioDestinatario, mensagem, false);
+                NotificacaoService service = retrofitConfig.getRetrofit().create(NotificacaoService.class);
+                Call<NotificacaoDados> call = service.salvarNotificacao(notificacaoDados);
+
+                call.enqueue(new Callback<NotificacaoDados>() {
+                    @Override
+                    public void onResponse(Call<NotificacaoDados> call, Response<NotificacaoDados> response) {
+                        Toast.makeText(ChatActivity.this, "codigo: " + response.code(),
+                                Toast.LENGTH_SHORT).show();
+
+                        if (response.isSuccessful()) {
+
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<NotificacaoDados> call, Throwable t) {
+
+                    }
+                });
+
+                salvarMensagem(idUsuarioRemetente, idUsuarioDestinatario, mensagem);
+
+                salvarMensagem(idUsuarioDestinatario, idUsuarioRemetente, mensagem);
+
+                salvarConversa(idUsuarioRemetente, idUsuarioDestinatario, usuarioDestinatario, mensagem, false);
 
                 salvarConversa(idUsuarioDestinatario, idUsuarioRemetente, usuarioRemetente, mensagem, false);
 
-            }else{
+            } else {
 
-                for (Usuario membro : grupo.getMembros()){
+                for (Usuario membro : grupo.getMembros()) {
+
+                    FirebaseMessaging.getInstance().subscribeToTopic(grupo.getNome());
 
                     String idRemetenteGrupo = Base64Custom.codificarBase64(membro.getEmail());
                     String idUsuarioLogadoGrupo = UsuarioFirebase.getIdentificadorUsuario();
@@ -250,41 +288,64 @@ public class ChatActivity extends AppCompatActivity {
                     mensagem.setMensagem(textoMensagem);
                     mensagem.setNome(usuarioRemetente.getNome());
 
-                    salvarMensagem(idRemetenteGrupo,idUsuarioDestinatario,mensagem);
+                    RetrofitConfig retrofitConfig = new RetrofitConfig();
 
-                    salvarConversa(idRemetenteGrupo, idUsuarioDestinatario,usuarioDestinatario, mensagem, true);
+                    final String to = "/topics/" + grupo.getNome();
+                    Notificacao notificacao = new Notificacao(grupo.getNome() + " -> " + usuarioRemetente.getNome(), textoMensagem);
+                    NotificacaoDados notificacaoDados = new NotificacaoDados(to, notificacao);
+
+                    NotificacaoService service = retrofitConfig.getRetrofit().create(NotificacaoService.class);
+
+                    Call<NotificacaoDados> call = service.salvarNotificacao(notificacaoDados);
+
+                    call.enqueue(new Callback<NotificacaoDados>() {
+                        @Override
+                        public void onResponse(Call<NotificacaoDados> call, Response<NotificacaoDados> response) {
+                            Toast.makeText(ChatActivity.this, "codigo: " + response.code(),
+                                    Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onFailure(Call<NotificacaoDados> call, Throwable t) {
+
+                        }
+                    });
+
+                    salvarMensagem(idRemetenteGrupo, idUsuarioDestinatario, mensagem);
+
+                    salvarConversa(idRemetenteGrupo, idUsuarioDestinatario, usuarioDestinatario, mensagem, true);
 
 
                 }
 
             }
-        }else{
+        } else {
 
             Toast.makeText(this, "Digite uma mensagem para enviar !"
                     , Toast.LENGTH_SHORT).show();
         }
     }
 
-    private void salvarConversa (String idRemetente, String idDestinatario,Usuario usuarioExibicao, Mensagem msg, boolean isGroup ){
+    private void salvarConversa(String idRemetente, String idDestinatario, Usuario usuarioExibicao, Mensagem msg, boolean isGroup) {
 
         Conversa conversaRemetente = new Conversa();
         conversaRemetente.setIdRemetente(idRemetente);
         conversaRemetente.setIdDestinatario(idDestinatario);
         conversaRemetente.setUltimaMensagem(msg.getMensagem());
 
-        if (isGroup){
+        if (isGroup) {
 
-        conversaRemetente.setIsGroup("true");
-        conversaRemetente.setGrupo(grupo);
+            conversaRemetente.setIsGroup("true");
+            conversaRemetente.setGrupo(grupo);
 
-        }else {
+        } else {
             conversaRemetente.setUsuarioExibicao(usuarioExibicao);
             conversaRemetente.setIsGroup("false");
         }
         conversaRemetente.salvar();
     }
 
-    private void salvarMensagem(String idRemetente, String idDestinatario, Mensagem msg){
+    private void salvarMensagem(String idRemetente, String idDestinatario, Mensagem msg) {
 
         DatabaseReference database = ConfiguracaoFirebase.getFirebaseDatabase();
         DatabaseReference mensagemRef = database.child("mensagens");
@@ -309,37 +370,37 @@ public class ChatActivity extends AppCompatActivity {
         mensagensRef.removeEventListener(childEventListenerMensagem);
     }
 
-    private void recuperarMensagem(){
+    private void recuperarMensagem() {
 
-       childEventListenerMensagem = mensagensRef.addChildEventListener(new ChildEventListener() {
-           @Override
-           public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+        childEventListenerMensagem = mensagensRef.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
 
-               Mensagem mensagem = dataSnapshot.getValue(Mensagem.class);
-               mensagens.add(mensagem);
-               adapter.notifyDataSetChanged();
-           }
+                Mensagem mensagem = dataSnapshot.getValue(Mensagem.class);
+                mensagens.add(mensagem);
+                adapter.notifyDataSetChanged();
+            }
 
-           @Override
-           public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
 
-           }
+            }
 
-           @Override
-           public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
 
-           }
+            }
 
-           @Override
-           public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
 
-           }
+            }
 
-           @Override
-           public void onCancelled(@NonNull DatabaseError databaseError) {
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
 
-           }
-       });
+            }
+        });
 
     }
 

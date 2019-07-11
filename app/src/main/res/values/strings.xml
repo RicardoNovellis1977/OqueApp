@@ -6,4 +6,5 @@
     <string name="title_activity_chat">ChatActivity</string>
     <string name="title_activity_grupo">GrupoActivity</string>
     <string name="title_activity_cadastro_grupo">CadastroGrupoActivity</string>
+    <string name="default_notification_channel_id">fcn_default_channel</string>
 </resources>

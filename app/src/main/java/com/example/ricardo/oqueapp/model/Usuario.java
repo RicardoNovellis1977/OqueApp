@@ -2,9 +2,12 @@ package com.example.ricardo.oqueapp.model;
 
 import com.example.ricardo.oqueapp.config.ConfiguracaoFirebase;
 import com.example.ricardo.oqueapp.helper.UsuarioFirebase;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -17,6 +20,7 @@ public class Usuario implements Serializable {
     private String email;
     private String senha;
     private  String foto;
+    private String token;
 
     public Usuario() {
     }
@@ -40,18 +44,28 @@ public class Usuario implements Serializable {
         Map<String,Object> valoresUsuario = converterParaMap();
 
         usuarioRef.updateChildren(valoresUsuario);
+
     }
 
     @Exclude
-    public Map<String,Object> converterParaMap(){
+    private Map<String,Object> converterParaMap(){
 
         HashMap<String,Object> usuarioMap = new HashMap<>();
 
         usuarioMap.put("email", getEmail());
+        usuarioMap.put("token", getToken());
         usuarioMap.put("nome", getNome());
         usuarioMap.put("foto", getFoto());
 
+
         return usuarioMap;
+    }
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 
     public String getFoto() {
