@@ -11,9 +11,7 @@ import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 
 import com.example.ricardo.oqueapp.R;
-import com.example.ricardo.oqueapp.activity.ChatActivity;
 import com.example.ricardo.oqueapp.activity.MainActivity;
-import com.example.ricardo.oqueapp.fragment.ConversasFragment;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
@@ -22,11 +20,11 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(RemoteMessage notificacao) {
 
-        if(notificacao.getNotification() != null){
+        if (notificacao.getNotification() != null) {
 
             String titulo = notificacao.getNotification().getTitle();
             String corpo = notificacao.getNotification().getBody();
-            
+
             enviarNotificacao(titulo, corpo);
 
         }
@@ -36,7 +34,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         String canal = getString(R.string.default_notification_channel_id);
         Uri uriSom = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        Intent intent = new Intent(this, ConversasFragment.class);
+        Intent intent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
 
         NotificationCompat.Builder notificacao = new NotificationCompat.Builder(this, canal)
@@ -49,13 +47,13 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 
-            NotificationChannel channel = new NotificationChannel(canal, "canal",NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationChannel channel = new NotificationChannel(canal, "canal", NotificationManager.IMPORTANCE_DEFAULT);
             notificationManager.createNotificationChannel(channel);
         }
 
-        notificationManager.notify(0,notificacao.build());
+        notificationManager.notify(0, notificacao.build());
     }
 
     @Override

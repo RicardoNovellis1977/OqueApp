@@ -8,7 +8,6 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -26,8 +25,6 @@ import com.example.ricardo.oqueapp.model.Grupo;
 import com.example.ricardo.oqueapp.model.Usuario;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
@@ -74,15 +71,14 @@ public class CadastroGrupoActivity extends AppCompatActivity {
             public void onClick(View v) {
 
                 Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                if (intent.resolveActivity(getPackageManager()) != null){
-                    startActivityForResult(intent,SELECAO_GALERIA);
+                if (intent.resolveActivity(getPackageManager()) != null) {
+                    startActivityForResult(intent, SELECAO_GALERIA);
                 }
             }
         });
 
 
-
-        if (getIntent().getExtras() != null){
+        if (getIntent().getExtras() != null) {
 
             List<Usuario> membros = (List<Usuario>) getIntent().getExtras().getSerializable("membros");
             listaMembrosSelecionado.addAll(membros);
@@ -96,7 +92,7 @@ public class CadastroGrupoActivity extends AppCompatActivity {
 
         RecyclerView.LayoutManager layoutManager1 = new LinearLayoutManager(
                 getApplicationContext(),
-                LinearLayoutManager.HORIZONTAL,false);
+                LinearLayoutManager.HORIZONTAL, false);
         recyclerMembrosSelecionados.setLayoutManager(layoutManager1);
         recyclerMembrosSelecionados.setHasFixedSize(true);
         recyclerMembrosSelecionados.setAdapter(grupoSelecionadoAdapter);
@@ -114,7 +110,7 @@ public class CadastroGrupoActivity extends AppCompatActivity {
                 grupo.salvar();
 
                 Intent intent = new Intent(CadastroGrupoActivity.this, ChatActivity.class);
-                intent.putExtra("chatGrupo",grupo);
+                intent.putExtra("chatGrupo", grupo);
                 startActivity(intent);
 
 
@@ -132,13 +128,13 @@ public class CadastroGrupoActivity extends AppCompatActivity {
             try {
 
                 Uri localImagemSelecionada = data.getData();
-                imagem = MediaStore.Images.Media.getBitmap(getContentResolver(),localImagemSelecionada);
+                imagem = MediaStore.Images.Media.getBitmap(getContentResolver(), localImagemSelecionada);
 
-                if (imagem != null){
+                if (imagem != null) {
                     imageGrupo.setImageBitmap(imagem);
 
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    imagem.compress(Bitmap.CompressFormat.JPEG,70,baos);
+                    imagem.compress(Bitmap.CompressFormat.JPEG, 70, baos);
                     byte[] dadosImagem = baos.toByteArray();
 
                     StorageReference imagemRef = storageReference
@@ -175,7 +171,7 @@ public class CadastroGrupoActivity extends AppCompatActivity {
                 }
 
 
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
